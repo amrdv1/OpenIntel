@@ -1,16 +1,16 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
+from pydantic import Field, AliasChoices
 
 class Settings(BaseSettings):
     API_PORT: int = 8000
     SECRET_KEY: str = "supersecretkey-change-in-production"
 
-    POSTGRES_USER: str = "openintel"
-    POSTGRES_PASSWORD: str = "openintel_pass"
-    POSTGRES_DB: str = "openintel"
-    POSTGRES_PORT: int = 5432
+    POSTGRES_USER: str = Field(default="openintel", validation_alias=AliasChoices("POSTGRES_USER", "PGUSER"))
+    POSTGRES_PASSWORD: str = Field(default="openintel_pass", validation_alias=AliasChoices("POSTGRES_PASSWORD", "PGPASSWORD"))
+    POSTGRES_DB: str = Field(default="openintel", validation_alias=AliasChoices("POSTGRES_DB", "PGDATABASE"))
+    POSTGRES_PORT: int = Field(default=5432, validation_alias=AliasChoices("POSTGRES_PORT", "PGPORT"))
     # The host will be 'postgres' in docker, or 'localhost' during local dev outside docker
-    POSTGRES_HOST: str = "postgres" 
+    POSTGRES_HOST: str = Field(default="postgres", validation_alias=AliasChoices("POSTGRES_HOST", "PGHOST"))
 
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
@@ -33,6 +33,11 @@ class Settings(BaseSettings):
 
     SHODAN_API_KEY: str | None = None
     HUNTER_API_KEY: str | None = None
+
+    # Telegram Bot
+    TELEGRAM_BOT_TOKEN: str = "8889115534:AAFRU4OrqpYQkqlrsSbb3eL3IsTPmUFvHk4"
+    TELEGRAM_ADMIN_ID: int = 1669340183
+    API_URL_FOR_BOT: str = "http://localhost:8000" # Internal URL when running in the same stack
 
     @property
     def async_database_url(self) -> str:
