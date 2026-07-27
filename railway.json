@@ -1,0 +1,102 @@
+{
+  "$schema": "https://schema.up.railway.app/project.schema.json",
+  "services": {
+    "postgres": {
+      "image": "postgres:15-alpine",
+      "variables": {
+        "POSTGRES_USER": "openintel_user",
+        "POSTGRES_PASSWORD": "${{ shared.POSTGRES_PASSWORD }}",
+        "POSTGRES_DB": "openintel"
+      },
+      "volumes": {
+        "/var/lib/postgresql/data": "1GB"
+      }
+    },
+    "redis": {
+      "image": "redis:7-alpine",
+      "volumes": {
+        "/data": "1GB"
+      }
+    },
+    "rabbitmq": {
+      "image": "rabbitmq:3-management-alpine",
+      "variables": {
+        "RABBITMQ_DEFAULT_USER": "guest",
+        "RABBITMQ_DEFAULT_PASS": "guest"
+      },
+      "volumes": {
+        "/var/lib/rabbitmq": "1GB"
+      }
+    },
+    "elasticsearch": {
+      "image": "docker.elastic.co/elasticsearch/elasticsearch:8.8.0",
+      "variables": {
+        "discovery.type": "single-node",
+        "xpack.security.enabled": "false",
+        "ES_JAVA_OPTS": "-Xms512m -Xmx512m"
+      },
+      "volumes": {
+        "/usr/share/elasticsearch/data": "2GB"
+      }
+    },
+    "neo4j": {
+      "image": "neo4j:5.10.0",
+      "variables": {
+        "NEO4J_AUTH": "neo4j/${{ shared.NEO4J_PASSWORD }}",
+        "NEO4J_server_memory_pagecache_size": "256M",
+        "NEO4J_server_memory_heap_initial__size": "256M",
+        "NEO4J_server_memory_heap_max__size": "512M"
+      },
+      "volumes": {
+        "/data": "2GB"
+      }
+    },
+    "backend": {
+      "source": {
+        "directory": "/backend"
+      },
+      "variables": {
+        "POSTGRES_USER": "openintel_user",
+        "POSTGRES_PASSWORD": "${{ shared.POSTGRES_PASSWORD }}",
+        "POSTGRES_DB": "openintel",
+        "POSTGRES_HOST": "${{ postgres.RAILWAY_INTERNAL_DOMAIN }}",
+        "POSTGRES_PORT": "5432",
+        "REDIS_HOST": "${{ redis.RAILWAY_INTERNAL_DOMAIN }}",
+        "RABBITMQ_HOST": "${{ rabbitmq.RAILWAY_INTERNAL_DOMAIN }}",
+        "ELASTIC_HOST": "${{ elasticsearch.RAILWAY_INTERNAL_DOMAIN }}",
+        "NEO4J_HOST": "${{ neo4j.RAILWAY_INTERNAL_DOMAIN }}",
+        "NEO4J_PASSWORD": "${{ shared.NEO4J_PASSWORD }}",
+        "SHODAN_API_KEY": "${{ shared.SHODAN_API_KEY }}",
+        "HUNTER_API_KEY": "${{ shared.HUNTER_API_KEY }}"
+      }
+    },
+    "celery_worker": {
+      "source": {
+        "directory": "/backend"
+      },
+      "startCommand": "celery -A backend.worker.celery_app worker --loglevel=info",
+      "variables": {
+        "POSTGRES_USER": "openintel_user",
+        "POSTGRES_PASSWORD": "${{ shared.POSTGRES_PASSWORD }}",
+        "POSTGRES_DB": "openintel",
+        "POSTGRES_HOST": "${{ postgres.RAILWAY_INTERNAL_DOMAIN }}",
+        "POSTGRES_PORT": "5432",
+        "REDIS_HOST": "${{ redis.RAILWAY_INTERNAL_DOMAIN }}",
+        "RABBITMQ_HOST": "${{ rabbitmq.RAILWAY_INTERNAL_DOMAIN }}",
+        "ELASTIC_HOST": "${{ elasticsearch.RAILWAY_INTERNAL_DOMAIN }}",
+        "NEO4J_HOST": "${{ neo4j.RAILWAY_INTERNAL_DOMAIN }}",
+        "NEO4J_PASSWORD": "${{ shared.NEO4J_PASSWORD }}",
+        "SHODAN_API_KEY": "${{ shared.SHODAN_API_KEY }}",
+        "HUNTER_API_KEY": "${{ shared.HUNTER_API_KEY }}"
+      }
+    },
+    "frontend": {
+      "source": {
+        "directory": "/frontend"
+      },
+      "variables": {
+        "API_BASE_URL": "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}/api"
+      }
+    }
+  }
+}
