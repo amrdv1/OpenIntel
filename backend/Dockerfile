@@ -24,4 +24,5 @@ COPY . /app/backend/
 
 # Command to run the application (assuming WORKDIR is /app)
 # We run the Celery worker and Telegram Bot in the background, and Uvicorn in the foreground
-CMD celery -A backend.worker.celery_app worker --loglevel=info & python -m backend.bot.main & uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}
+RUN chmod +x /app/backend/start.sh
+CMD ["/bin/bash", "/app/backend/start.sh"]
