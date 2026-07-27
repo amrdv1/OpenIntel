@@ -1,0 +1,32 @@
+# OpenIntel Backend Dependencies
+
+# Web Framework
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+
+# Database & ORM
+SQLAlchemy>=2.0.0
+alembic>=1.11.0
+psycopg2-binary>=2.9.7
+asyncpg>=0.28.0
+
+# Caching & Queue
+redis>=4.6.0
+celery>=5.3.1
+amqp>=5.1.1
+
+# Graph & Search Databases
+neo4j>=5.10.0
+elasticsearch>=8.8.0
+
+# Data Validation & Settings
+pydantic[email]>=2.0.0
+pydantic-settings>=2.0.0
+
+# Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Async HTTP Client for Adapters
+httpx>=0.24.1
+asyncio>=3.4.3

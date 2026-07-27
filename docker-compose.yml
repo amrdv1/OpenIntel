@@ -1,0 +1,185 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: openintel-backend
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - elasticsearch
+      - neo4j
+    networks:
+      - openintel-network
+
+  celery_worker:
+    build: 
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: openintel-celery
+    restart: always
+    environment:
+      - POSTGRES_USER=openintel_user
+      - POSTGRES_PASSWORD=securepassword
+      - POSTGRES_DB=openintel
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
+      - ELASTIC_HOST=elasticsearch
+      - ELASTIC_PASSWORD=elastic_pass
+      - NEO4J_HOST=neo4j
+      - NEO4J_PASSWORD=neo4j_pass
+      - RABBITMQ_HOST=rabbitmq
+    command: >
+      bash -c "celery -A backend.worker.celery_app worker --loglevel=info"
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+      - neo4j
+      - rabbitmq
+    networks:
+      - openintel-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: openintel-frontend
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    networks:
+      - openintel-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: openintel-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - openintel-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: openintel-postgres
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-openintel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openintel_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-openintel}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - openintel-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: openintel-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - openintel-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: openintel-rabbitmq
+    restart: always
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    networks:
+      - openintel-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: openintel-elasticsearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-elastic_pass}
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=${ES_JAVA_OPTS:--Xms512m -Xmx512m}"
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - openintel-network
+
+  neo4j:
+    image: neo4j:5.10.0
+    container_name: openintel-neo4j
+    restart: always
+    environment:
+      - NEO4J_AUTH=${NEO4J_AUTH:-neo4j/neo4j_pass}
+      - NEO4J_server_memory_pagecache_size=256M
+      - NEO4J_server_memory_heap_initial__size=256M
+      - NEO4J_server_memory_heap_max__size=512M
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4jdata:/data
+    networks:
+      - openintel-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: openintel-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    networks:
+      - openintel-network
+    # Volumes mapping will be added in monitoring phase
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: openintel-grafana
+    restart: always
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - openintel-network
+
+networks:
+  openintel-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  rabbitmqdata:
+  esdata:
+  neo4jdata:
