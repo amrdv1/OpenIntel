@@ -15,11 +15,11 @@ RUN apt-get update && apt-get install -y \
 
 # Install python dependencies
 # Install python dependencies
-COPY backend/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
-COPY backend/ /app/backend/
+# Copy project contents into a 'backend' directory inside the container
+COPY . /app/backend/
 
-# Command to run the application
+# Command to run the application (assuming WORKDIR is /app)
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

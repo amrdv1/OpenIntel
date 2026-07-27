@@ -3,8 +3,7 @@ version: '3.8'
 services:
   backend:
     build: 
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
     container_name: openintel-backend
     restart: always
     env_file:
@@ -22,8 +21,7 @@ services:
 
   celery_worker:
     build: 
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
     container_name: openintel-celery
     restart: always
     environment:
