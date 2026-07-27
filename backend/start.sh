@@ -3,7 +3,7 @@ set -e
 
 # Run database migrations
 echo "Running database migrations..."
-alembic upgrade head
+alembic -c backend/alembic.ini upgrade head
 
 # Start Celery worker in background
 echo "Starting Celery worker..."
