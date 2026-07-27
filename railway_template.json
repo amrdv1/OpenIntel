@@ -97,6 +97,17 @@
       "variables": {
         "API_BASE_URL": "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}/api"
       }
+    },
+    "bot": {
+      "source": {
+        "directory": "/backend/bot"
+      },
+      "startCommand": "python -m backend.bot.main",
+      "variables": {
+        "TELEGRAM_BOT_TOKEN": "8889115534:AAFRU4OrqpYQkqlrsSbb3eL3IsTPmUFvHk4",
+        "TELEGRAM_ADMIN_ID": "1669340183",
+        "API_URL_FOR_BOT": "http://${{ backend.RAILWAY_INTERNAL_DOMAIN }}:${{ backend.PORT }}"
+      }
     }
   }
 }
