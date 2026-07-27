@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #050505;
+  --foreground: #eaeaea;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-geist-sans), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom Cyber Security Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff9d;
+}
+
+@layer utilities {
+  .glow-text {
+    text-shadow: 0 0 10px rgba(0, 255, 157, 0.7);
+  }
+  
+  .glow-box {
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.2);
+    border-color: rgba(0, 255, 157, 0.5);
+  }
+}
