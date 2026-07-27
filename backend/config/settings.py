@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
 class Settings(BaseSettings):
     API_PORT: int = 8000
@@ -13,6 +14,8 @@ class Settings(BaseSettings):
 
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str | None = None
+    REDIS_URL_ENV: str | None = Field(default=None, alias="REDIS_URL")
 
     ELASTIC_HOST: str = "elasticsearch"
     ELASTIC_PORT: int = 9200
@@ -37,6 +40,10 @@ class Settings(BaseSettings):
 
     @property
     def redis_url(self) -> str:
+        if self.REDIS_URL_ENV:
+            return self.REDIS_URL_ENV
+        if self.REDIS_PASSWORD:
+            return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/0"
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
     @property
