@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = Field(default="openintel_pass", validation_alias=AliasChoices("POSTGRES_PASSWORD", "PGPASSWORD"))
     POSTGRES_DB: str = Field(default="openintel", validation_alias=AliasChoices("POSTGRES_DB", "PGDATABASE"))
     POSTGRES_PORT: int = Field(default=5432, validation_alias=AliasChoices("POSTGRES_PORT", "PGPORT"))
-    # The host will be 'postgres' in docker, or 'localhost' during local dev outside docker
     POSTGRES_HOST: str = Field(default="postgres", validation_alias=AliasChoices("POSTGRES_HOST", "PGHOST"))
+    DATABASE_URL: str | None = None
 
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
@@ -41,6 +41,14 @@ class Settings(BaseSettings):
 
     @property
     def async_database_url(self) -> str:
+        if self.DATABASE_URL:
+            # Railway provides DATABASE_URL starting with postgresql:// or postgres://
+            url = self.DATABASE_URL
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif url.startswith("postgresql://"):
+                url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            return url
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     @property
