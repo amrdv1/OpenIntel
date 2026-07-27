@@ -1,13 +1,53 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command
 from backend.bot.api_client import OpenIntelClient
+from backend.config.settings import settings
+from backend.database.session import async_session_maker
+from backend.database.models import User
+from sqlalchemy import select
 import re
 
 router = Router()
 api_client = OpenIntelClient()
 
+async def get_or_create_user(telegram_id: int) -> User:
+    async with async_session_maker() as session:
+        result = await session.execute(select(User).filter_by(telegram_id=telegram_id))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            # Create new user with default 3 credits, or infinite if admin
+            is_admin = telegram_id == settings.TELEGRAM_ADMIN_ID
+            credits = 999999 if is_admin else 3
+            user = User(
+                telegram_id=telegram_id,
+                credits=credits,
+                is_superuser=is_admin
+            )
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+            
+        return user
+
+async def consume_credit(telegram_id: int) -> bool:
+    async with async_session_maker() as session:
+        result = await session.execute(select(User).filter_by(telegram_id=telegram_id))
+        user = result.scalar_one_or_none()
+        
+        if not user or user.credits <= 0:
+            return False
+            
+        if not user.is_superuser:
+            user.credits -= 1
+            await session.commit()
+            
+        return True
+
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
+    user = await get_or_create_user(message.from_user.id)
+    
     welcome_text = (
         "🦅 *Welcome to OpenIntel OSINT Engine*\n\n"
         "Send me any target identifier to initiate a deep scan across global intelligence networks\.\n\n"
@@ -15,7 +55,8 @@ async def cmd_start(message: types.Message):
         "📧 Email\n"
         "📱 Phone Number\n"
         "🌐 IPv4 Address\n"
-        "👤 Username"
+        "👤 Username\n\n"
+        f"💳 *Your Credits:* {user.credits}"
     )
     await message.answer(welcome_text)
 
@@ -30,11 +71,20 @@ def detect_query_type(query: str) -> str:
 
 @router.message(F.text)
 async def handle_search(message: types.Message):
+    user = await get_or_create_user(message.from_user.id)
+    
+    if user.credits <= 0:
+        await message.answer("❌ *Out of credits!*\n_Please contact support to top up your balance\._")
+        return
+        
     query = message.text.strip()
     query_type = detect_query_type(query)
     
     # 1. Send initial pending message
     wait_msg = await message.answer(f"⏳ *Initiating scan for {query_type}:* `{query}`\.\.\.\n_This may take a few moments\._")
+    
+    # Consume credit before running
+    await consume_credit(message.from_user.id)
     
     try:
         # 2. Call backend API
@@ -45,7 +95,7 @@ async def handle_search(message: types.Message):
         await wait_msg.edit_text(formatted_result, disable_web_page_preview=True)
         
     except Exception as e:
-        await wait_msg.edit_text(f"❌ *Scan Failed*\n`{str(e)}`")
+        await wait_msg.edit_text(f"❌ *Scan Failed*\n`{escape_md(str(e))}`")
 
 def escape_md(text: str) -> str:
     """Escapes special characters for Telegram MarkdownV2"""
