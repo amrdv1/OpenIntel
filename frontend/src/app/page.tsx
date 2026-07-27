@@ -122,13 +122,20 @@ export default function Home() {
   const error = submitError || pollError;
 
   return (
-    <div className="w-full max-w-5xl flex flex-col items-center gap-8 animate-fade-in pb-16">
-      <div className="text-center space-y-4">
-        <h2 className="text-4xl font-mono font-bold tracking-tight text-foreground mt-8">
-          INTELLIGENCE <span className="text-accent glow-text">GATHERING</span>
+    <div className="w-full max-w-5xl flex flex-col items-center gap-8 animate-fade-in pb-16 relative">
+      
+      {/* Background Cyber Grid */}
+      <div className="absolute inset-0 z-[-1] opacity-10 bg-[linear-gradient(rgba(0,255,157,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,157,0.1)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+
+      <div className="text-center space-y-4 mt-8 relative">
+        <div className="absolute -top-10 -left-10 w-20 h-20 bg-accent/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-10 -right-10 w-20 h-20 bg-blue-500/20 rounded-full blur-3xl"></div>
+        <h2 className="text-5xl font-mono font-bold tracking-tighter text-foreground glitch-effect" data-text="OPENINTEL TERMINAL">
+          OPENINTEL <span className="text-accent glow-text">TERMINAL</span>
         </h2>
-        <p className="text-gray-400 font-mono text-sm max-w-xl mx-auto">
-          Enter a target identifier to initiate a distributed OSINT scan across available intelligence modules.
+        <p className="text-gray-400 font-mono text-sm max-w-xl mx-auto border-l-2 border-accent pl-4 text-left">
+          <span className="text-accent">{">"}</span> INITIALIZING CONNECTION...<br/>
+          <span className="text-accent">{">"}</span> ENTER TARGET IDENTIFIER FOR DEEP WEB RECONNAISSANCE.
         </p>
       </div>
 
@@ -162,9 +169,20 @@ export default function Home() {
         <button
           type="submit"
           disabled={isSubmitting || pollStatus === "pending"}
-          className="w-full bg-accent/10 text-accent border border-accent rounded py-3 font-mono font-bold hover:bg-accent hover:text-background transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
+          className="relative w-full bg-panel text-accent border border-accent rounded py-3 font-mono font-bold hover:bg-accent hover:text-background transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-[0.2em] overflow-hidden group"
         >
-          {isSubmitting || pollStatus === "pending" ? "SCAN IN PROGRESS..." : "EXECUTE SCAN"}
+          <span className="absolute inset-0 w-full h-full bg-accent/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></span>
+          <span className="relative z-10 flex items-center justify-center gap-2">
+            {isSubmitting || pollStatus === "pending" ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                EXECUTING...
+              </>
+            ) : "INITIATE SCAN"}
+          </span>
         </button>
       </form>
 
